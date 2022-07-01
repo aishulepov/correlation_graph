@@ -1,35 +1,64 @@
-# https://stackoverflow.com/questions/59598019/how-to-plot-large-networks-clearly
-# https://stackoverflow.com/questions/58881266/how-to-have-different-edge-weights-but-same-edge-length-in-network-diagram
-# https://gist.github.com/maciejkos/e3bc958aac9e7a245dddff8d86058e17
-# https://js.cytoscape.org/demos/2ebdc40f1c2540de6cf0/
+'''
+streamlit run --server.port  8500 streamlit_pyvis.py
+'''
+
+import streamlit as st
+import streamlit.components.v1 as components
 import pandas as pd
 import networkx as nx
 from pyvis.network import Network
+st.set_page_config(layout="wide")
+
+QUANTILE_DEFAULT = 0.99
+ZOOM_RATIO = 2000
+FONT_SIZE = 25
+st.title('Графопостроитель')
+
+uploaded_corr = st.file_uploader("Загрузите файл корреляции") or './input_data/Корреляция_регионы_tab.csv'
+uploaed_info =  st.file_uploader("Опционально: файл с частной информацией об узлах")
+
+df_info = pd.read_csv(uploaed_info, sep='\t') if uploaed_info else pd.DataFrame([["Алтайский край", "green", FONT_SIZE*1000000000]], 
+                                                                                    columns = ["node", "color","size"])
+if uploaded_corr is not None:
+    df_corr = pd.read_csv(uploaded_corr, sep='\t')
+    quantile = st.slider('Фильтрация по квантилям', min_value= 0.0, max_value=1.0, value=QUANTILE_DEFAULT)
+    zoom = st.slider('Визуальное отдаление узлов', min_value = ZOOM_RATIO, max_value=ZOOM_RATIO*100, step=ZOOM_RATIO//10,  value=ZOOM_RATIO)
+    font_size = st.slider('Размер шрифта', min_value = FONT_SIZE, max_value=FONT_SIZE*10,  value=FONT_SIZE)
+    node_color = st.select_slider(
+        'Цвет узлов',
+        value = 'blue',
+        options=['red', 'orange', 'yellow', 'green', 'blue', 'indigo', 'violet', 'black', 'gray'])
+    font_color = st.select_slider(
+        'Цвет подписей',
+        value = 'gray',
+        options=['red', 'orange', 'yellow', 'green', 'blue', 'indigo', 'violet', 'black', 'gray'])
 
 
+    df_corr["value"] = df_corr.value.str.replace(",", ".").astype(float)
+    df_corr = df_corr[df_corr["to"] != df_corr["from"]]
+    df_corr = df_corr[df_corr.value>df_corr.value.quantile(quantile)]
+    df_corr["value"] = df_corr.value
 
-df = pd.read_csv('./input_data/Корреляция_регионы_tab.csv', sep='\t')
-df["value"] = df.value.str.replace(",", ".").astype(float)
+    if st.button('Построить граф'):
+        G = nx.from_pandas_edgelist(df_corr, 'from', 'to', edge_attr=True, create_using=nx.Graph())
+        edges = G.edges()
+        weights = list(df_corr.value)
+        pos = nx.spring_layout(G, weight='weight')
+        nc = nx.draw_networkx(G, pos, with_labels=True, node_color='yellow')
+        nt = Network(width='100%')
+        for k, v in pos.items():
+            current_node_color = df_info.loc[df_info.node== k, "color"].values[0] if any(df_info.loc[df_info.node== k, "color"]) else node_color
+            current_node_size = df_info.loc[df_info.node== k, "size"].values[0] if any(df_info.loc[df_info.node== k, "size"]) else FONT_SIZE
+            nt.add_node(k, 
+            title=k, 
+            x = v[0]*zoom, 
+            y=v[1]*zoom, 
+            label=k, 
+            physics=False, 
+            color=current_node_color, 
+            font=f'{font_size}px arial {font_color}',
+            value=int(current_node_size))
 
-df = df[df["to"]!=df["from"]]
-df = df[df.value>df.value.quantile(0.96)]
-df["value"] = df.value
-
-G = nx.from_pandas_edgelist(df, 'from', 'to', edge_attr=True, create_using=nx.Graph())
-
-
-edges = G.edges()
-weights = list(df.value)
-#weights = [G[u][v]['weight'] for u,v in edges]
-pos = nx.spring_layout(G, weight='weight')
-nc = nx.draw_networkx(G, pos, with_labels=True, node_color='yellow')
-
-
-nt = Network()
-nt.from_nx(G)
-'''for k, v in pos.items():
-    nt.add_node(k, title=k, x = v[0]*10000, y=v[1]*10000, label=k, physics=False, color='#FF0000', font='90px arial blue')
-
-for src,tgt in edges:
-    nt.add_edge(src,tgt, title=G[src][tgt]["value"])'''
-nt.show('nx.html')
+        for src,tgt in edges:
+            nt.add_edge(src,tgt, title=G[src][tgt]["value"], color = "gray")
+        components.html(nt.generate_html(), height=3000)
