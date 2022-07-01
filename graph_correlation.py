@@ -14,13 +14,13 @@ ZOOM_RATIO = 2000
 FONT_SIZE = 25
 st.title('Графопостроитель')
 
-uploaded_corr = st.file_uploader("Загрузите файл корреляции") or './input_data/Корреляция_регионы_tab.csv'
-uploaed_info =  st.file_uploader("Опционально: файл с частной информацией об узлах")
+uploaded_corr = st.file_uploader("Загрузите файл корреляции или оставьте пустым для загрузки корреляции регионов") or './input_data/Корреляция.xlsx'
+uploaed_info =  st.file_uploader("Опционально: файл с частной информацией об узлах") #or './input_data/Информация.xlsx'
 
-df_info = pd.read_csv(uploaed_info, sep='\t') if uploaed_info else pd.DataFrame([["Алтайский край", "green", FONT_SIZE*1000000000]], 
+df_info = pd.read_excel(uploaed_info) if uploaed_info else pd.DataFrame([], 
                                                                                     columns = ["node", "color","size"])
 if uploaded_corr is not None:
-    df_corr = pd.read_csv(uploaded_corr, sep='\t')
+    df_corr = pd.read_excel(uploaded_corr)
     quantile = st.slider('Фильтрация по квантилям', min_value= 0.0, max_value=1.0, value=QUANTILE_DEFAULT)
     zoom = st.slider('Визуальное отдаление узлов', min_value = ZOOM_RATIO, max_value=ZOOM_RATIO*100, step=ZOOM_RATIO//10,  value=ZOOM_RATIO)
     font_size = st.slider('Размер шрифта', min_value = FONT_SIZE, max_value=FONT_SIZE*10,  value=FONT_SIZE)
@@ -33,8 +33,8 @@ if uploaded_corr is not None:
         value = 'gray',
         options=['red', 'orange', 'yellow', 'green', 'blue', 'indigo', 'violet', 'black', 'gray'])
 
-
-    df_corr["value"] = df_corr.value.str.replace(",", ".").astype(float)
+    if df_corr["value"].dtype!='float64':
+        df_corr["value"] = df_corr.value.str.replace(",", ".").astype(float)
     df_corr = df_corr[df_corr["to"] != df_corr["from"]]
     df_corr = df_corr[df_corr.value>df_corr.value.quantile(quantile)]
     df_corr["value"] = df_corr.value
