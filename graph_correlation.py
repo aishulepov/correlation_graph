@@ -14,14 +14,14 @@ ZOOM_RATIO = 2000
 FONT_SIZE = 25
 st.title('Графопостроитель')
 
-uploaded_corr = st.file_uploader("Загрузите файл корреляции или оставьте пустым для загрузки корреляции регионов") or './input_data/Корреляция.xlsx'
+uploaded_corr = st.file_uploader("Загрузите файл корреляции или оставьте пустым для загрузки корреляции регионов") or './input_data/Корреляция_регионы.csv'
 
 uploaed_info =  st.file_uploader("Опционально: файл с частной информацией об узлах") #or './input_data/Информация.xlsx'
 #pd.ExcelFile(uploaed_info).parse()
-df_info = pd.read_excel(uploaed_info) if uploaed_info else pd.DataFrame([], 
+df_info = pd.read_csv(uploaed_info, sep=';') if uploaed_info else pd.DataFrame([], 
                                                                                   columns = ["node", "color","size"])
 if uploaded_corr is not None:
-    df_corr = pd.read_excel(uploaded_corr)
+    df_corr = pd.read_csv(uploaded_corr, sep=';')
     quantile = st.slider('Фильтрация по квантилям', min_value= 0.0, max_value=1.0, value=QUANTILE_DEFAULT)
     zoom = st.slider('Визуальное отдаление узлов', min_value = ZOOM_RATIO, max_value=ZOOM_RATIO*100, step=ZOOM_RATIO//10,  value=ZOOM_RATIO)
     font_size = st.slider('Размер шрифта', min_value = FONT_SIZE, max_value=FONT_SIZE*10,  value=FONT_SIZE)
