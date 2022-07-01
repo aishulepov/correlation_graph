@@ -14,9 +14,9 @@ ZOOM_RATIO = 2000
 FONT_SIZE = 25
 st.title('Графопостроитель')
 
-uploaded_corr = st.file_uploader("Загрузите файл корреляции или оставьте пустым для загрузки корреляции регионов", type="xlsx") or './input_data/Корреляция.xlsx'
+uploaded_corr = st.file_uploader("Загрузите файл корреляции или оставьте пустым для загрузки корреляции регионов") or './input_data/Корреляция.xlsx'
 
-uploaed_info =  st.file_uploader("Опционально: файл с частной информацией об узлах", type="xlsx") #or './input_data/Информация.xlsx'
+uploaed_info =  st.file_uploader("Опционально: файл с частной информацией об узлах") #or './input_data/Информация.xlsx'
 #pd.ExcelFile(uploaed_info).parse()
 df_info = pd.read_excel(uploaed_info) if uploaed_info else pd.DataFrame([], 
                                                                                   columns = ["node", "color","size"])
