@@ -45,7 +45,7 @@ if uploaded_corr is not None:
         weights = list(df_corr.value)
         pos = nx.spring_layout(G, weight='weight')
         nc = nx.draw_networkx(G, pos, with_labels=True, node_color='yellow')
-        nt = Network(width='100%')
+        nt = Network(width='100%',height='2000px')
         for k, v in pos.items():
             current_node_color = df_info.loc[df_info.node== k, "color"].values[0] if any(df_info.loc[df_info.node== k, "color"]) else node_color
             current_node_size = df_info.loc[df_info.node== k, "size"].values[0] if any(df_info.loc[df_info.node== k, "size"]) else FONT_SIZE
@@ -61,4 +61,4 @@ if uploaded_corr is not None:
 
         for src,tgt in edges:
             nt.add_edge(src,tgt, title=G[src][tgt]["value"], color = "gray")
-        components.html(nt.generate_html(), height=3000)
+        components.html(nt.generate_html(), height=2000)
