@@ -1,6 +1,7 @@
 # Запуск из Docker
 
 sudo docker build . -t correlation-app
+
 sudo docker run -p 8501:8501 correlation-app:latest
 
 # Запуск с сервера
